@@ -12,3 +12,6 @@ To compare multiple properties:
 IEqualityComparer<Test1> eq = Equality.Comparer<Test1>(nameof(Test1.Id), nameof(Test1.Name));
 ```
 
+## Implementation
+
+A class (and assembly) are dynamically created at run-time using `System.Reflection.Emit`.

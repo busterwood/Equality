@@ -149,6 +149,12 @@ namespace BusterWood.EqualityGenerator
             return il;
         }
 
+        public static ILGenerator LoadAddress(this ILGenerator il, FieldBuilder f)
+        {
+            il.Emit(OpCodes.Ldflda, f);
+            return il;
+        }
+
         public static ILGenerator Load(this ILGenerator il, string str)
         {
             il.Emit(OpCodes.Ldstr, str);

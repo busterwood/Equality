@@ -37,6 +37,13 @@ namespace BusterWood.EqualityGenerator
         public int Id { get; set; }
         public string Name { get; set; }
 
+        private StringComparer strEq;
+
+        public Class1(StringComparer c)
+        {
+            strEq = c;
+        }
+
         public void Fred()
         {
             IEqualityComparer<Class1> eq = Equality.Comparer<Class1>(nameof(Id), nameof(Name));
@@ -44,7 +51,7 @@ namespace BusterWood.EqualityGenerator
 
         public bool Equals(Class1 left, Class1 right)
         {
-            return left.Id != right.Id;
+            return left.Id != right.Id && strEq.Equals(left.Name, right.Name);
         }
 
         public int GetHashCode(Class1 left)

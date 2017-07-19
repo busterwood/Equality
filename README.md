@@ -14,6 +14,11 @@ To compare multiple properties:
 IEqualityComparer<Test1> eq = Equality.Comparer<Test1>(nameof(Test1.Id), nameof(Test1.Name));
 ```
 
+To compare ignoring case you can pass a `StringComparer` as the first argument:
+```
+IEqualityComparer<Test1> eq = Equality.Comparer<Test1>(StringComparer.OrdinalIgnoreCase, nameof(Test1.Name));
+```
+
 ## Implementation
 
 A class (and assembly) are dynamically generated at run-time using `System.Reflection.Emit`.

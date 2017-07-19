@@ -89,6 +89,15 @@ namespace UnitTests
         }
 
         [Test]
+        public void can_check_equality_with_string_comparer()
+        {
+            var eq = Equality.Comparer<Test1>(StringComparer.OrdinalIgnoreCase, nameof(Test1.Name));
+            Test1 left = new Test1 { Id = 2, Name = "hello" };
+            Test1 right = new Test1 { Id = 99, Name = "HELLO" };
+            Assert.AreEqual(true, eq.Equals(left, right));
+        }
+
+        [Test]
         public void not_equal_if_string_property_value_different()
         {
             var eq = Equality.Comparer<Test1>(nameof(Test1.Name));
@@ -153,6 +162,15 @@ namespace UnitTests
         {
             var eq = Equality.Comparer<Test1>(nameof(Test1.Id));
             Assert.AreEqual(0, eq.GetHashCode(null));
+        }
+
+        [Test]
+        public void hashcodes_are_equals_when_using_string_comparer()
+        {
+            var eq = Equality.Comparer<Test1>(StringComparer.OrdinalIgnoreCase, nameof(Test1.Name));
+            Test1 left = new Test1 { Id = 2, Name = "hello" };
+            Test1 right = new Test1 { Id = 99, Name = "HELLO" };
+            Assert.AreEqual(eq.GetHashCode(left), eq.GetHashCode(right));
         }
 
         public class Test1

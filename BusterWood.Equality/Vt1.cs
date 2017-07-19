@@ -7,6 +7,8 @@ using System.Reflection.Emit;
 
 namespace BusterWood.EqualityGenerator
 {
+
+#if DEBUG
     public struct Vt1
     {
         public int Id { get; set; }
@@ -52,4 +54,5 @@ namespace BusterWood.EqualityGenerator
             return hc;
         }
     }
+#endif
 }

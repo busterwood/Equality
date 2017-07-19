@@ -16,4 +16,10 @@ IEqualityComparer<Test1> eq = Equality.Comparer<Test1>(nameof(Test1.Id), nameof(
 
 ## Implementation
 
-A class (and assembly) are dynamically created at run-time using `System.Reflection.Emit`.
+A class (and assembly) are dynamically generated at run-time using `System.Reflection.Emit`.
+
+The generated class implements:
+* `IEqualityComparer<T>.Equals(x, y)`
+* `IEqualityComparer<T>.GetHashCode(x)`
+
+Both classes (reference types) and structs (value types) are supported.

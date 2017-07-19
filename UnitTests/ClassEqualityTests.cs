@@ -18,6 +18,33 @@ namespace UnitTests
         }
 
         [Test]
+        public void can_check_equality_with_bool()
+        {
+            var eq = Equality.Comparer<TestWith<bool>>(nameof(TestWith<bool>.Value));
+            TestWith<bool> left = new TestWith<bool> { Value = true };
+            TestWith<bool> right = new TestWith<bool> { Value = true };
+            Assert.AreEqual(true, eq.Equals(left, right));
+        }
+
+        [Test]
+        public void can_check_equality_with_long()
+        {
+            var eq = Equality.Comparer<TestWith<long>>(nameof(TestWith<long>.Value));
+            TestWith<long> left = new TestWith<long> { Value = 1L };
+            TestWith<long> right = new TestWith<long> { Value = 1L };
+            Assert.AreEqual(true, eq.Equals(left, right));
+        }
+
+        [Test]
+        public void can_check_equality_with_double()
+        {
+            var eq = Equality.Comparer<TestWith<double>>(nameof(TestWith<double>.Value));
+            TestWith<double> left = new TestWith<double> { Value = 1d };
+            TestWith<double> right = new TestWith<double> { Value = 1d };
+            Assert.AreEqual(true, eq.Equals(left, right));
+        }
+
+        [Test]
         public void not_equal_if_int_property_value_different()
         {
             var eq = Equality.Comparer<Test1>(nameof(Test1.Id));
@@ -132,6 +159,11 @@ namespace UnitTests
         {
             public int Id { get; set; }
             public string Name { get; set; }
+        }
+
+        public class TestWith<T>
+        {
+            public T Value { get; set; }
         }
 
         public class TestRefEquals

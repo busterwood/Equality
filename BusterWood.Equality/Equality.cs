@@ -11,7 +11,7 @@ namespace BusterWood.EqualityGenerator
     {
         static readonly ConcurrentDictionary<Key, object> _comparers = new ConcurrentDictionary<Key, object>();
 
-        public static IEqualityComparer<T> Create<T>(params string[] properties) => (IEqualityComparer<T>)_comparers.GetOrAdd(new Key(typeof(T), properties), CreateInstance);
+        public static IEqualityComparer<T> Comparer<T>(params string[] properties) => (IEqualityComparer<T>)_comparers.GetOrAdd(new Key(typeof(T), properties), CreateInstance);
 
         private static object CreateInstance(Key key)
         {

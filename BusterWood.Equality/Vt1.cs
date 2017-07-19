@@ -16,7 +16,7 @@ namespace BusterWood.EqualityGenerator
 
         public void Fred()
         {
-            IEqualityComparer<Vt1> eq = Equality.Create<Vt1>(nameof(Id), nameof(Name));
+            IEqualityComparer<Vt1> eq = Equality.Comparer<Vt1>(nameof(Id), nameof(Name));
         }
 
         public bool Equals(Vt1 left, Vt1 right)
@@ -39,7 +39,7 @@ namespace BusterWood.EqualityGenerator
 
         public void Fred()
         {
-            IEqualityComparer<Class1> eq = Equality.Create<Class1>(nameof(Id), nameof(Name));
+            IEqualityComparer<Class1> eq = Equality.Comparer<Class1>(nameof(Id), nameof(Name));
         }
 
         public bool Equals(Class1 left, Class1 right)

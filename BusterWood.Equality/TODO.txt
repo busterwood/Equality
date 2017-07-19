@@ -1,0 +1,4 @@
+﻿TODO
+====
+
+A way to compare string properties ignoring case (StringComparer?)

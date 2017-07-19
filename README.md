@@ -19,7 +19,7 @@ IEqualityComparer<Test1> eq = Equality.Comparer<Test1>(nameof(Test1.Id), nameof(
 A class (and assembly) are dynamically generated at run-time using `System.Reflection.Emit`.
 
 The generated class implements:
-* `IEqualityComparer<T>.Equals(x, y)`
-* `IEqualityComparer<T>.GetHashCode(x)`
+* `IEqualityComparer<T>.Equals(x, y)`, null parameters are handled when T is a class
+* `IEqualityComparer<T>.GetHashCode(x)` a null parameter returns zero when T is a class
 
 Both classes (reference types) and structs (value types) are supported.

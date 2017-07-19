@@ -121,6 +121,13 @@ namespace UnitTests
             Assert.AreEqual(0, eq.GetHashCode(left));
         }
 
+        [Test]
+        public void hashcode_of_null_is_zero()
+        {
+            var eq = Equality.Create<Test1>(nameof(Test1.Id));
+            Assert.AreEqual(0, eq.GetHashCode(null));
+        }
+
         public class Test1
         {
             public int Id { get; set; }

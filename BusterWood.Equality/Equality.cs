@@ -10,9 +10,9 @@ namespace BusterWood.EqualityGenerator
     public static class Equality
     {
         static readonly ConcurrentDictionary<Key, object> _comparers = new ConcurrentDictionary<Key, object>();
-        
+
         public static IEqualityComparer<T> Create<T>(params string[] properties) => (IEqualityComparer<T>)_comparers.GetOrAdd(new Key(typeof(T), properties), CreateInstance);
-        
+
         private static object CreateInstance(Key key)
         {
             var asmBuilder = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName("Equality_" + key), AssemblyBuilderAccess.Run);
@@ -27,21 +27,24 @@ namespace BusterWood.EqualityGenerator
             typeBuilder.DefineDefaultConstructor(MethodAttributes.Public);
             if (key.Type.GetTypeInfo().IsClass)
             {
-                DefineClassEquals(key, typeBuilder);
-                DefineClassGetHashCode(key, typeBuilder);
+                ClassEqualityBuilder.DefineEquals(key, typeBuilder);
+                ClassEqualityBuilder.DefineGetHashCode(key, typeBuilder);
             }
             else
             {
-                DefineStructEquals(key, typeBuilder);
-                DefineStructGetHashCode(key, typeBuilder);
+                StructEqualityBulider.DefineEquals(key, typeBuilder);
+                StructEqualityBulider.DefineGetHashCode(key, typeBuilder);
             }
-
 
             var tinfo = typeBuilder.CreateTypeInfo();
             return Activator.CreateInstance(tinfo.AsType());
         }
 
-        private static MethodBuilder DefineClassGetHashCode(Key key, TypeBuilder typeBuilder)
+    }
+
+    static class ClassEqualityBuilder
+    {
+        public static MethodBuilder DefineGetHashCode(Key key, TypeBuilder typeBuilder)
         {
             var method = typeBuilder.DefineMethod("GetHashCode", MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.Final, CallingConventions.HasThis, typeof(int), new[] { key.Type });
             var il = method.GetILGenerator();
@@ -49,15 +52,12 @@ namespace BusterWood.EqualityGenerator
             var getHashCode = getHashCodeOverLoads.First(m => m.GetParameters().Length == 0);
 
             var hc = il.DeclareLocal<int>();
-            il.Load0().Store(hc);
+            il.Load0().Store(hc);  // hc = 0
 
-            var locals = new List<LocalBuilder>(key.Properties.Length);
-            foreach (var propName in key.Properties)
-            {
-                var prop = key.Type.GetTypeInfo().GetDeclaredProperty(propName);
-                locals.Add(il.DeclareLocal(prop.PropertyType));
-            }
-            int i = 0;
+            //if (obj == null) return 0;
+            var @return = il.DefineLabel();
+            il.Arg1().Null().IfEqualGoto(@return);
+
             foreach (var propName in key.Properties)
             {
                 var prop = key.Type.GetTypeInfo().GetDeclaredProperty(propName);
@@ -67,11 +67,10 @@ namespace BusterWood.EqualityGenerator
                 {
                     // if (prop != null) hc += prop.GetHashCode();
                     var next = il.DefineLabel();
-                    var temp = locals[i++];
+                    var temp = il.DeclareLocal(prop.PropertyType);
                     il.Arg1().CallGetProperty(prop).Store(temp);
                     il.Load(temp).Null().IfEqualGoto(next);
-                    il.Load(temp).CallVirt(getHashCode).Load(hc).Add();
-                    il.Store(hc);
+                    il.Load(temp).CallVirt(getHashCode).Load(hc).Add().Store(hc);
                     il.MarkLabel(next);
                 }
                 else // is a struct
@@ -79,17 +78,17 @@ namespace BusterWood.EqualityGenerator
                     // var temp = obj.Prop;
                     // hc += temp.GetHashCode();
                     var ghc = propType.GetDeclaredMethods(nameof(object.GetHashCode)).First(m => m.GetParameters().Length == 0); // GetHashCode must be overridden on a struct
-                    var temp = locals[i++];
+                    var temp = il.DeclareLocal(prop.PropertyType);
                     il.Arg1().CallGetProperty(prop).Store(temp);
-                    il.LoadAddress(temp).Call(ghc).Load(hc).Add();
-                    il.Store(hc);
+                    il.LoadAddress(temp).Call(ghc).Load(hc).Add().Store(hc);
                 }
             }
+            il.MarkLabel(@return);
             il.Load(hc).Return(); // todo: generate hash code
             return method;
         }
 
-        private static MethodBuilder DefineClassEquals(Key key, TypeBuilder typeBuilder)
+        public static MethodBuilder DefineEquals(Key key, TypeBuilder typeBuilder)
         {
             var method = typeBuilder.DefineMethod("Equals", MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.Final, CallingConventions.HasThis, typeof(bool), new[] { key.Type, key.Type });
             var il = method.GetILGenerator();
@@ -151,7 +150,11 @@ namespace BusterWood.EqualityGenerator
             return method;
         }
 
-        private static MethodBuilder DefineStructEquals(Key key, TypeBuilder typeBuilder)
+    }
+
+    static class StructEqualityBulider
+    {
+        public static MethodBuilder DefineEquals(Key key, TypeBuilder typeBuilder)
         {
             var method = typeBuilder.DefineMethod("Equals", MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.Final, CallingConventions.HasThis, typeof(bool), new[] { key.Type, key.Type });
             var il = method.GetILGenerator();
@@ -206,7 +209,7 @@ namespace BusterWood.EqualityGenerator
             return method;
         }
 
-        private static MethodBuilder DefineStructGetHashCode(Key key, TypeBuilder typeBuilder)
+        public static MethodBuilder DefineGetHashCode(Key key, TypeBuilder typeBuilder)
         {
             var method = typeBuilder.DefineMethod("GetHashCode", MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.Final, CallingConventions.HasThis, typeof(int), new[] { key.Type });
             var il = method.GetILGenerator();
@@ -214,15 +217,8 @@ namespace BusterWood.EqualityGenerator
             var getHashCode = getHashCodeOverLoads.First(m => m.GetParameters().Length == 0);
 
             var hc = il.DeclareLocal<int>();
-            il.Load0().Store(hc);
+            il.Load0().Store(hc); // hc = 0
 
-            var locals = new List<LocalBuilder>(key.Properties.Length);
-            foreach (var propName in key.Properties)
-            {
-                var prop = key.Type.GetTypeInfo().GetDeclaredProperty(propName);
-                locals.Add(il.DeclareLocal(prop.PropertyType));
-            }
-            int i = 0;
             foreach (var propName in key.Properties)
             {
                 var prop = key.Type.GetTypeInfo().GetDeclaredProperty(propName);
@@ -232,11 +228,10 @@ namespace BusterWood.EqualityGenerator
                 {
                     // if (prop != null) hc += prop.GetHashCode();
                     var next = il.DefineLabel();
-                    var temp = locals[i++];
+                    var temp = il.DeclareLocal(prop.PropertyType);
                     il.Arg1Address().CallGetProperty(prop).Store(temp);
                     il.Load(temp).Null().IfEqualGoto(next);
-                    il.Load(temp).CallVirt(getHashCode).Load(hc).Add();
-                    il.Store(hc);
+                    il.Load(temp).CallVirt(getHashCode).Load(hc).Add().Store(hc);
                     il.MarkLabel(next);
                 }
                 else // is a struct
@@ -244,31 +239,30 @@ namespace BusterWood.EqualityGenerator
                     // var temp = obj.Prop;
                     // hc += temp.GetHashCode();
                     var ghc = propType.GetDeclaredMethods(nameof(object.GetHashCode)).First(m => m.GetParameters().Length == 0); // GetHashCode must be overridden on a struct
-                    var temp = locals[i++];
+                    var temp = il.DeclareLocal(prop.PropertyType);
                     il.Arg1Address().CallGetProperty(prop).Store(temp);
-                    il.LoadAddress(temp).Call(ghc).Load(hc).Add();
-                    il.Store(hc);
+                    il.LoadAddress(temp).Call(ghc).Load(hc).Add().Store(hc);
                 }
             }
             il.Load(hc).Return(); // todo: generate hash code
             return method;
         }
+    }
 
-        struct Key
+    struct Key
+    {
+        public Type Type { get; }
+        public string[] Properties { get; }
+
+        public Key(Type type, string[] props)
         {
-            public Type Type { get; }
-            public string[] Properties { get; }
+            Type = type;
+            Properties = props;
+        }
 
-            public Key(Type type, string[] props)
-            {
-                Type = type;
-                Properties = props;
-            }
-
-            public override string ToString()
-            {
-                return Type.Name + "_" + string.Join("_", Properties);
-            }
+        public override string ToString()
+        {
+            return Type.Name + "_" + string.Join("_", Properties);
         }
     }
 }
